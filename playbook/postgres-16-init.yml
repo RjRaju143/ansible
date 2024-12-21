@@ -1,0 +1,68 @@
+---
+- name: Install PostgreSQL 16 on the Server
+  hosts: all
+  become: yes
+  tasks:
+    - name: Install dependencies for PostgreSQL repository
+      apt:
+        name:
+          - wget
+          - ca-certificates
+          - curl
+        state: present
+        update_cache: yes
+
+    - name: Add PostgreSQL repository to sources list
+      shell: |
+        echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list
+      args:
+        creates: /etc/apt/sources.list.d/pgdg.list
+
+    - name: Add PostgreSQL GPG key
+      shell: |
+        curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor -o /etc/apt/trusted.gpg.d/postgresql.gpg
+      args:
+        creates: /etc/apt/trusted.gpg.d/postgresql.gpg
+
+    - name: Install PostgreSQL 16
+      apt:
+        name:
+          - postgresql-16
+        state: present
+        update_cache: yes
+
+    - name: Install PostgreSQL contrib package
+      apt:
+        name:
+          - postgresql-contrib-16
+        state: present
+        update_cache: yes
+
+    ##################### ISSUE #####################
+    # # Copy local postgresql.conf to the remote server
+    # - name: Copy local postgresql.conf to remote server
+    #   copy:
+    #     src: ../conf/postgresql.conf # Update with the correct local path
+    #     dest: "/etc/postgresql/16/main/postgresql.conf" # Adjust for your PostgreSQL version
+    #     owner: postgres
+    #     group: postgres
+    #     mode: "0644"
+    #     backup: yes # Optionally create a backup before replacing the file
+
+    # - name: Reload PostgreSQL to apply changes
+    #   service:
+    #     name: postgresql
+    #     state: reloaded
+    ##################### ISSUE #####################
+    - name: Set password for postgres user
+      shell: |
+        sudo -u postgres psql -c "ALTER USER postgres WITH ENCRYPTED PASSWORD 'postgres';"
+      args:
+        creates: /tmp/postgres_password_set
+
+    # Check PostgreSQL status
+    - name: Check PostgreSQL service status
+      systemd:
+        name: postgresql
+        state: started
+        enabled: yes

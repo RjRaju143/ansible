@@ -1,0 +1,54 @@
+---
+- name: Update, Upgrade the Server and Run Inline Commands
+  hosts: all
+  become: yes
+  tasks:
+
+    - name: Run a shell command to update package
+      shell: "sudo apt update"
+      register: update
+
+    - name: Show the output of the result update command
+      debug:
+        msg: "{{ update.stdout }}"
+
+    - name: Run a shell command to install python package
+      shell: "sudo apt install -y python2-dev python2 python-dev-is-python3"
+      register: python
+
+    - name: Show the output of the result python command
+      debug:
+        msg: "{{ python.stdout }}"
+
+    - name: Run a shell command to upgrade package
+      shell: "sudo apt upgrade -y"
+      register: upgrade
+
+    - name: Show the output of the result upgrade command
+      debug:
+        msg: "{{ upgrade.stdout }}"
+
+    - name: Run a shell command to net-tools package
+      shell: "sudo apt install net-tools -y"
+      register: nettools
+
+    - name: Show the output of the result net-tools command
+      debug:
+        msg: "{{ nettools.stdout }}"
+
+    - name: Run a shell command to python-is-python3 package
+      shell: "sudo apt install python-is-python3 -y"
+      register:  pythonispython3
+
+    - name: Show the output of the result python-is-python3 command
+      debug:
+        msg: "{{  pythonispython3.stdout }}"
+    
+    - name: Run dev devendencies commands
+      shell: |
+        sudo apt install -y build-essential zlib1g-dev libncurses5-dev libgdbm-dev libnss3-dev libssl-dev libreadline-dev libffi-dev wget curl btop
+      register:  devendencies
+
+    - name: Show the output of the result devendencies command
+      debug:
+        msg: "{{  devendencies.stdout }}"

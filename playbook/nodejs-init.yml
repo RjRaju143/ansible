@@ -1,0 +1,27 @@
+---
+- name: Install Node.js
+  hosts: all
+  become: yes
+  tasks:
+    - name: Install prerequisites
+      apt:
+        name:
+          - curl
+          - gnupg
+        state: present
+        update_cache: yes
+
+    - name: Install Node.js
+      apt:
+        name: nodejs
+        state: present
+        update_cache: yes
+
+    - name: Verify Node.js installation
+      command: node -v
+      register: node_version
+      changed_when: false
+
+    - name: Show Node.js version
+      debug:
+        msg: "Installed Node.js version is {{ node_version.stdout }}"
