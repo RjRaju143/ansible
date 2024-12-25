@@ -17,3 +17,10 @@
         name: nginx
         state: started
         enabled: yes
+
+    - name: Install Certbot and its dependencies
+      ansible.builtin.apt:
+        name:
+          - certbot
+          - python3-certbot-nginx
+        state: present
