@@ -13,7 +13,7 @@
         msg: "{{ update.stdout }}"
 
     - name: Run a shell command to install python package
-      shell: "sudo apt install -y python2-dev python2 python-dev-is-python3"
+      shell: "sudo apt install -y python3-dev python3 python-dev-is-python3"
       register: python
 
     - name: Show the output of the result python command
