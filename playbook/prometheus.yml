@@ -1,0 +1,90 @@
+---
+- name: Setup Prometheus Monitoring
+  hosts: all
+  become: yes
+  # gather_facts: no
+
+  tasks:
+    - name: Update and upgrade apt packages
+      apt:
+        update_cache: yes
+        upgrade: dist
+
+    - name: Download Prometheus tarball
+      get_url:
+        url: https://github.com/prometheus/prometheus/releases/download/v2.46.0/prometheus-2.46.0.linux-amd64.tar.gz
+        dest: /tmp/prometheus.tar.gz
+
+    - name: Extract Prometheus tarball
+      unarchive:
+        src: /tmp/prometheus.tar.gz
+        dest: /tmp
+        remote_src: yes
+
+    - name: Move Prometheus binary to /usr/local/bin
+      copy:
+        remote_src: yes
+        src: /tmp/prometheus-2.46.0.linux-amd64/prometheus
+        dest: /usr/local/bin/prometheus
+        mode: '0755'
+
+    - name: Move promtool binary to /usr/local/bin
+      copy:
+        remote_src: yes
+        src: /tmp/prometheus-2.46.0.linux-amd64/promtool
+        dest: /usr/local/bin/promtool
+        mode: '0755'
+
+    - name: Create Prometheus directories
+      file:
+        path: "{{ item }}"
+        state: directory
+        owner: root
+        group: root
+        mode: '0755'
+      loop:
+        - /etc/prometheus
+        - /var/lib/prometheus
+
+    - name: Copy prometheus.yml configuration file
+      copy:
+        content: |
+          global:
+            scrape_interval: 15s
+            evaluation_interval: 15s
+
+          scrape_configs:
+            - job_name: "prometheus"
+              static_configs:
+                - targets: ["localhost:9090"]
+        dest: /etc/prometheus/prometheus.yml
+        mode: '0644'
+
+    - name: Create Prometheus systemd service file
+      copy:
+        dest: /etc/systemd/system/prometheus.service
+        content: |
+          [Unit]
+          Description=Prometheus Monitoring
+          Wants=network-online.target
+          After=network-online.target
+
+          [Service]
+          User=root
+          ExecStart=/usr/local/bin/prometheus \
+            --config.file=/etc/prometheus/prometheus.yml \
+            --storage.tsdb.path=/var/lib/prometheus
+
+          [Install]
+          WantedBy=multi-user.target
+        mode: '0644'
+
+    - name: Reload systemd daemon
+      systemd:
+        daemon_reload: yes
+
+    - name: Start Prometheus service
+      systemd:
+        name: prometheus
+        state: started
+        enabled: yes
