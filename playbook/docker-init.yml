@@ -1,0 +1,51 @@
+---
+- name: Install Docker and Docker Compose
+  hosts: all
+  become: true
+
+  tasks:
+    - name: Update the package index
+      apt:
+        update_cache: yes
+
+    - name: Log update status
+      debug:
+        msg: "Running apt update to refresh package index."
+
+    - name: Install Docker
+      apt:
+        name: docker.io
+        state: present
+
+    - name: Log Docker installation status
+      debug:
+        msg: "Installing Docker (docker.io)."
+
+    - name: Install Docker Compose
+      apt:
+        name: docker-compose
+        state: present
+
+    - name: Log Docker Compose installation status
+      debug:
+        msg: "Installing Docker Compose."
+
+    - name: Verify Docker installation
+      command: docker --version
+      register: docker_version_output
+      changed_when: false
+
+    - name: Log Docker version
+      debug:
+        msg: "Docker version: {{ docker_version_output.stdout }}"
+
+    - name: Verify Docker Compose installation
+      command: docker-compose --version
+      register: compose_version_output
+      changed_when: false
+      failed_when: compose_version_output.rc != 0
+
+    - name: Log Docker Compose version
+      debug:
+        msg: >-
+          Docker Compose version: {{ compose_version_output.stdout if compose_version_output.rc == 0 else 'Docker Compose is not installed or the command failed' }}
