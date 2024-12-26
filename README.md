@@ -12,7 +12,7 @@ ansible-playbook -i inventory.init playbook/postgres-16-init.yml
 
 ansible-playbook -i inventory.init playbook/jenkins-init.yml
 
-ansible-playbook -i inventory.init playbook/prometheus.yml
+ansible-playbook -i inventory.init playbook/prometheus-init.yml
 
-ansible-playbook -i inventory.init playbook/grafana.yml
+ansible-playbook -i inventory.init playbook/grafana-init.yml
 ```
