@@ -64,26 +64,30 @@ To monitor your Kubernetes (k8s) cluster metrics using Prometheus and Grafana in
 ---
 
 ## 2. **Install Grafana on the Ubuntu Server**
-1. **Add the Grafana repository**:
+
+1. **Install Grafana**:
    ```bash
-   sudo apt-get install -y software-properties-common
-   sudo add-apt-repository "deb https://packages.grafana.com/oss/deb stable main"
-   wget -q -O - https://packages.grafana.com/gpg.key | sudo apt-key add -
-   sudo apt update
+   sudo apt-get install -y apt-transport-https software-properties-common wget
+   sudo mkdir -p /etc/apt/keyrings/
+   wget -q -O - https://apt.grafana.com/gpg.key | gpg --dearmor | sudo tee /etc/apt/keyrings/grafana.gpg > /dev/null
+   echo "deb [signed-by=/etc/apt/keyrings/grafana.gpg] https://apt.grafana.com stable main" | sudo tee -a /etc/apt/sources.list.d/grafana.list
+   echo "deb [signed-by=/etc/apt/keyrings/grafana.gpg] https://apt.grafana.com beta main" | sudo tee -a /etc/apt/sources.list.d/grafana.list
+   # Updates the list of available packages
+   sudo apt-get update
+   # Installs the latest OSS release:
+   sudo apt-get install grafana
+   # Installs the latest Enterprise release:
+   sudo apt-get install grafana-enterprise
    ```
 
-2. **Install Grafana**:
-   ```bash
-   sudo apt install grafana
-   ```
-
-3. **Start Grafana service**:
+2. **Start Grafana service**:
    ```bash
    sudo systemctl start grafana-server
    sudo systemctl enable grafana-server
+   sudo systemctl status grafana-server
    ```
 
-4. **Access Grafana**:
+3. **Access Grafana**:
    Open `http://<Ubuntu_Server_IP>:3000` in your browser. Default credentials:
    - **Username**: `admin`
    - **Password**: `admin` (You’ll be prompted to change this upon first login.)
