@@ -1,0 +1,65 @@
+---
+- name: Install Jenkins and dependencies on Debian-based system
+  hosts: all
+  become: true
+  tasks:
+    - name: Update apt package cache
+      ansible.builtin.apt:
+        update_cache: yes
+
+    - name: Install fontconfig and openjdk-17-jre
+      ansible.builtin.apt:
+        name:
+          - fontconfig
+          - openjdk-17-jre
+        state: present
+
+    - name: Download Jenkins GPG key
+      ansible.builtin.get_url:
+        url: https://pkg.jenkins.io/debian-stable/jenkins.io-2023.key
+        dest: /usr/share/keyrings/jenkins-keyring.asc
+        mode: '0644'
+
+    - name: Add Jenkins APT repository
+      ansible.builtin.copy:
+        content: |
+          deb [signed-by=/usr/share/keyrings/jenkins-keyring.asc] https://pkg.jenkins.io/debian-stable binary/
+        dest: /etc/apt/sources.list.d/jenkins.list
+        mode: '0644'
+
+    - name: Update apt package cache again after adding Jenkins repository
+      ansible.builtin.apt:
+        update_cache: yes
+
+    - name: Install Jenkins
+      ansible.builtin.apt:
+        name: jenkins
+        state: present
+        update_cache: yes
+
+    - name: Ensure Jenkins is started and enabled
+      ansible.builtin.systemd:
+        name: jenkins
+        state: started
+        enabled: yes
+
+    - name: Wait for Jenkins to start (checking HTTP port)
+      ansible.builtin.wait_for:
+        host: "{{ inventory_hostname }}"
+        port: 8080
+        delay: 5
+        timeout: 60
+        state: started
+        msg: "Jenkins did not start within the expected time."
+
+    - name: Retrieve Jenkins Initial Admin Password
+      ansible.builtin.shell: cat /var/lib/jenkins/secrets/initialAdminPassword
+      register: jenkinsInitPassword
+      retries: 5
+      delay: 10
+      failed_when: jenkinsInitPassword.stdout == ""
+      become_user: root
+
+    - name: Output Jenkins Initial Admin Password
+      debug:
+        msg: "Jenkins URL: {{ inventory_hostname }}:8080, Jenkins Initial Admin Password: {{ jenkinsInitPassword.stdout }}"
